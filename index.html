@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#ea580c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>BharatLens Ultra - Multi-State Language & Culture Identifier</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-banner">
+        <h1>🇮🇳 BharatLens Ultra</h1>
+        <div class="top-nav-buttons">
+          <button id="openDownloadModalBtn" class="btn small-btn pwa-install-btn" type="button">📲 Download App</button>
+          <button id="quizToggleBtn" class="btn small-btn quiz-btn" type="button">🎯 Play Quiz</button>
+        </div>
+      </div>
+      <p>Scan items to see their names, trivia, Ayurvedic profile & market phrases across India</p>
+    </header>
+
+    <!-- Download Modal Hub -->
+    <div id="downloadModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📲 Install BharatLens App</h3>
+          <button id="closeDownloadModalBtn" class="text-btn danger" type="button">✕ Close</button>
+        </div>
+        <div class="app-icon-small">🇮🇳</div>
+        <p class="modal-tagline">Install directly on your phone or desktop for quick camera launch and offline access.</p>
+        
+        <div class="install-box">
+          <button id="mainDownloadBtn" class="btn download-btn" type="button">
+            <span>📲</span> Install BharatLens App
+          </button>
+        </div>
+
+        <div id="deviceInstructions" class="instructions-card">
+          <h4 id="deviceTitle">Device Instructions</h4>
+          <ol id="deviceSteps"></ol>
+        </div>
+
+        <div class="qr-section">
+          <p>Scan with your phone to install directly:</p>
+          <div id="qrcode"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Key Container -->
+    <div class="api-key-container">
+      <div class="api-key-header">
+        <label for="apiKey">Gemini API Key (Auto-saved in browser):</label>
+        <button id="clearKeyBtn" class="text-btn danger" type="button">Clear Key</button>
+      </div>
+      <input type="password" id="apiKey" placeholder="Paste your Gemini API key here" />
+    </div>
+
+    <!-- Language Quiz Game Modal -->
+    <section id="quizSection" class="quiz-card hidden">
+      <div class="quiz-header">
+        <h3>🎯 Language & State Mini-Game</h3>
+        <button id="closeQuizBtn" class="text-btn" type="button">✕ Close</button>
+      </div>
+      <p id="quizQuestion" class="quiz-question">Scan an item first to start the quiz challenge!</p>
+      <div id="quizOptions" class="quiz-options-grid"></div>
+      <p id="quizFeedback" class="quiz-feedback"></p>
+    </section>
+
+    <!-- Camera / Upload Section -->
+    <section class="camera-card">
+      <div class="media-preview-container">
+        <video id="cameraPreview" autoplay playsinline style="display: none;"></video>
+        <img id="imagePreview" alt="Snapshot Preview" style="display: none;" />
+        <canvas id="photoCanvas" style="display: none;"></canvas>
+        <div id="placeholder" class="placeholder-box">
+          <span>📷 Tap 'Open Camera' or 'Upload Image' to analyze</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="startCamBtn" class="btn primary-btn" type="button">Open Camera</button>
+        <button id="captureBtn" class="btn success-btn" type="button" style="display: none;">Snap Photo</button>
+        <label class="btn secondary-btn upload-label">
+          Upload Image
+          <input type="file" id="fileInput" accept="image/*" />
+        </label>
+      </div>
+    </section>
+
+    <!-- Loader -->
+    <div id="loading" class="loading-state hidden">
+      <div class="spinner"></div>
+      <p>Analyzing object, cultural trivia, Mandi phrases & regional dialects...</p>
+    </div>
+
+    <!-- Results Section -->
+    <section id="resultsSection" class="results-section hidden">
+      <!-- Flashcard / Export Area -->
+      <div id="flashcardArea" class="flashcard-box">
+        <div class="summary-top">
+          <span class="badge">Identified</span>
+          <div class="export-actions">
+            <button id="downloadCardBtn" class="btn small-btn accent-btn" type="button">🖼️ Save Flashcard</button>
+            <button id="copyAllBtn" class="text-btn" type="button">📋 Copy Text</button>
+          </div>
+        </div>
+        <h2 id="identifiedName">Object Name</h2>
+        <p id="identifiedDesc">Short description.</p>
+        
+        <div class="meta-pills-row">
+          <span id="giPill" class="meta-pill">🏷️ Origin: General</span>
+          <span id="seasonPill" class="meta-pill">🗓️ Season: Year-round</span>
+        </div>
+
+        <div id="triviaBox" class="info-box trivia-bg">
+          <strong>💡 Cultural Significance:</strong>
+          <p id="triviaText"></p>
+        </div>
+
+        <div id="ayurvedaBox" class="info-box ayurveda-bg">
+          <strong>🌿 Ayurvedic Profile:</strong>
+          <p id="ayurvedaText"></p>
+        </div>
+      </div>
+
+      <!-- India Map & Zone Filters -->
+      <div class="map-and-filters">
+        <div class="zone-pills">
+          <button class="zone-btn active" data-zone="ALL" type="button">All States</button>
+          <button class="zone-btn" data-zone="North" type="button">North</button>
+          <button class="zone-btn" data-zone="South" type="button">South</button>
+          <button class="zone-btn" data-zone="East" type="button">East</button>
+          <button class="zone-btn" data-zone="West" type="button">West</button>
+          <button class="zone-btn" data-zone="Central" type="button">Central</button>
+        </div>
+
+        <div class="map-container">
+          <svg id="indiaSvg" viewBox="0 0 500 550" class="india-svg">
+            <g id="svgStateGroup">
+              <!-- North Zone -->
+              <path id="state-JK" class="map-state" data-state="Jammu and Kashmir" data-zone="North" d="M190,40 L230,20 L270,50 L240,95 L180,85 Z"><title>Jammu & Kashmir / Ladakh</title></path>
+              <path id="state-Punjab" class="map-state" data-state="Punjab" data-zone="North" d="M170,95 L205,90 L210,130 L165,125 Z"><title>Punjab</title></path>
+              <path id="state-Delhi" class="map-state" data-state="Delhi" data-zone="North" d="M210,130 L230,125 L235,145 L215,150 Z"><title>Delhi / Haryana</title></path>
+              <path id="state-UP" class="map-state" data-state="Uttar Pradesh" data-zone="North" d="M235,125 L320,135 L300,195 L220,180 Z"><title>Uttar Pradesh</title></path>
+              
+              <!-- West Zone -->
+              <path id="state-Rajasthan" class="map-state" data-state="Rajasthan" data-zone="West" d="M125,125 L210,135 L190,215 L115,190 Z"><title>Rajasthan</title></path>
+              <path id="state-Gujarat" class="map-state" data-state="Gujarat" data-zone="West" d="M80,200 L160,205 L155,270 L75,250 Z"><title>Gujarat</title></path>
+              <path id="state-Maharashtra" class="map-state" data-state="Maharashtra" data-zone="West" d="M150,265 L260,250 L240,340 L140,320 Z"><title>Maharashtra</title></path>
+
+              <!-- Central Zone -->
+              <path id="state-MP" class="map-state" data-state="Madhya Pradesh" data-zone="Central" d="M185,210 L300,200 L285,265 L175,260 Z"><title>Madhya Pradesh</title></path>
+
+              <!-- East Zone -->
+              <path id="state-Bihar" class="map-state" data-state="Bihar" data-zone="East" d="M315,145 L375,150 L365,195 L305,190 Z"><title>Bihar</title></path>
+              <path id="state-WB" class="map-state" data-state="West Bengal" data-zone="East" d="M365,185 L400,190 L370,265 L345,230 Z"><title>West Bengal</title></path>
+              <path id="state-Odisha" class="map-state" data-state="Odisha" data-zone="East" d="M285,255 L355,250 L330,320 L270,300 Z"><title>Odisha</title></path>
+              <path id="state-Assam" class="map-state" data-state="Assam" data-zone="East" d="M400,150 L470,140 L480,185 L415,190 Z"><title>Assam / North East</title></path>
+
+              <!-- South Zone -->
+              <path id="state-Telangana" class="map-state" data-state="Telangana" data-zone="South" d="M225,310 L285,300 L270,360 L215,350 Z"><title>Telangana</title></path>
+              <path id="state-AP" class="map-state" data-state="Andhra Pradesh" data-zone="South" d="M265,340 L315,330 L275,440 L235,390 Z"><title>Andhra Pradesh</title></path>
+              <path id="state-Karnataka" class="map-state" data-state="Karnataka" data-zone="South" d="M165,330 L230,335 L205,445 L150,400 Z"><title>Karnataka</title></path>
+              <path id="state-TamilNadu" class="map-state" data-state="Tamil Nadu" data-zone="South" d="M210,430 L270,425 L230,520 L195,490 Z"><title>Tamil Nadu</title></path>
+              <path id="state-Kerala" class="map-state" data-state="Kerala" data-zone="South" d="M175,445 L205,440 L190,520 L165,490 Z"><title>Kerala</title></path>
+            </g>
+          </svg>
+          <div id="mapTooltip" class="map-tooltip hidden"></div>
+        </div>
+      </div>
+
+      <input type="text" id="searchInput" placeholder="🔍 Search state, language, local market phrase or dish..." />
+
+      <div id="statesGrid" class="states-grid"></div>
+    </section>
+
+    <!-- Scan History Section -->
+    <section class="history-section">
+      <div class="history-header">
+        <h3>📜 Recent Scans</h3>
+        <button id="clearHistoryBtn" class="text-btn danger" type="button">Clear History</button>
+      </div>
+      <div id="historyGrid" class="history-grid">
+        <p class="empty-msg">No previous scans found.</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
